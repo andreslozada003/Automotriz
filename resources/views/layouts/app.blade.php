@@ -72,6 +72,7 @@
             </div>
             <nav class="nav">
                 <a href="{{ route('dashboard') }}" @class(['active' => request()->routeIs('dashboard')])>Panel</a>
+                <a href="{{ route('cash.index') }}" @class(['active' => request()->routeIs('cash.*')])>Cierre de caja</a>
                 <a href="{{ route('sales.create') }}" @class(['active' => request()->routeIs('sales.create')])>Nueva venta</a>
                 <a href="{{ route('sales.index') }}" @class(['active' => request()->routeIs('sales.index', 'sales.show')])>Ventas</a>
                 <a href="{{ route('products.index') }}" @class(['active' => request()->routeIs('products.*')])>Productos</a>

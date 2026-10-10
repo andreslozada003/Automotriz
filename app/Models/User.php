@@ -67,6 +67,16 @@ class User extends Authenticatable
         return $this->hasMany(CreditPayment::class);
     }
 
+    public function cashSessionsOpened()
+    {
+        return $this->hasMany(CashSession::class, 'opened_by');
+    }
+
+    public function cashSessionsClosed()
+    {
+        return $this->hasMany(CashSession::class, 'closed_by');
+    }
+
     public function isAdmin(): bool
     {
         return $this->role === 'admin';

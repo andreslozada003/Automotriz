@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CreditPayment;
 use App\Models\Sale;
+use App\Services\CashReportService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -63,6 +64,8 @@ class CreditController extends Controller
             'reference' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string'],
         ]);
+
+        app(CashReportService::class)->assertDayIsOpen($data['payment_date']);
 
         DB::transaction(function () use ($sale, $data): void {
             $sale = Sale::lockForUpdate()->findOrFail($sale->id);

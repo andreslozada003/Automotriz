@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CashClosureController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CreditController;
 use App\Http\Controllers\CustomerController;
@@ -23,6 +24,10 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/caja', [CashClosureController::class, 'index'])->name('cash.index');
+    Route::post('/caja/apertura', [CashClosureController::class, 'open'])->name('cash.open');
+    Route::post('/caja/movimientos', [CashClosureController::class, 'movement'])->name('cash.movement');
+    Route::post('/caja/cierre', [CashClosureController::class, 'close'])->name('cash.close');
 
     Route::get('/sales/{sale}/receipt', [SaleController::class, 'receipt'])->name('sales.receipt');
     Route::resource('sales', SaleController::class)->only(['index', 'create', 'store', 'show']);
@@ -35,6 +40,8 @@ Route::middleware('auth')->group(function () {
     Route::resource('services', ServiceController::class)->only(['index']);
 
     Route::middleware('role:admin')->group(function () {
+        Route::post('/caja/{session}/reabrir', [CashClosureController::class, 'reopen'])->name('cash.reopen');
+        Route::post('/caja/cierre-mensual', [CashClosureController::class, 'closeMonthly'])->name('cash.monthly.close');
         Route::get('/products/import', [ProductImportController::class, 'create'])->name('products.import.create');
         Route::post('/products/import', [ProductImportController::class, 'store'])->name('products.import.store');
         Route::get('/products/import/template', [ProductImportController::class, 'template'])->name('products.import.template');

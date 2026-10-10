@@ -60,4 +60,9 @@ class Sale extends Model
     {
         return $this->hasMany(CreditPayment::class);
     }
+
+    public function payments()
+    {
+        return $this->hasMany(SalePayment::class);
+    }
 }

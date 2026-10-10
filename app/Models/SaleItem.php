@@ -13,6 +13,7 @@ class SaleItem extends Model
         'item_type',
         'product_name',
         'unit_price',
+        'cost_price',
         'tax_rate',
         'quantity',
         'subtotal',
@@ -22,6 +23,7 @@ class SaleItem extends Model
 
     protected $casts = [
         'unit_price' => 'decimal:2',
+        'cost_price' => 'decimal:2',
         'tax_rate' => 'decimal:2',
         'subtotal' => 'decimal:2',
         'tax_amount' => 'decimal:2',

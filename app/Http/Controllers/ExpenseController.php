@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Expense;
+use App\Services\CashReportService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -67,7 +68,9 @@ class ExpenseController extends Controller
 
     public function store(Request $request)
     {
-        Expense::create($this->validated($request) + ['user_id' => auth()->id()]);
+        $data = $this->validated($request);
+        app(CashReportService::class)->assertDayIsOpen($data['expense_date']);
+        Expense::create($data + ['user_id' => auth()->id()]);
 
         return redirect()->route('expenses.index')->with('success', 'Gasto registrado.');
     }
@@ -82,13 +85,17 @@ class ExpenseController extends Controller
 
     public function update(Request $request, Expense $expense)
     {
-        $expense->update($this->validated($request));
+        $data = $this->validated($request);
+        app(CashReportService::class)->assertDayIsOpen($expense->expense_date);
+        app(CashReportService::class)->assertDayIsOpen($data['expense_date']);
+        $expense->update($data);
 
         return redirect()->route('expenses.index')->with('success', 'Gasto actualizado.');
     }
 
     public function destroy(Expense $expense)
     {
+        app(CashReportService::class)->assertDayIsOpen($expense->expense_date);
         $expense->delete();
 
         return back()->with('success', 'Gasto eliminado.');

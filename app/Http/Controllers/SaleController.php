@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\Service;
+use App\Services\CashReportService;
 use App\Services\FactusService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -56,6 +57,10 @@ class SaleController extends Controller
             'credit_due_date' => ['nullable', 'date', 'required_if:payment_method,credito'],
             'discount' => ['nullable', 'numeric', 'min:0'],
             'paid_amount' => ['required', 'numeric', 'min:0'],
+            'payments' => ['nullable', 'array'],
+            'payments.*.payment_method' => ['required_with:payments', 'in:efectivo,transferencia,tarjeta,otro'],
+            'payments.*.amount' => ['required_with:payments', 'numeric', 'min:0.01'],
+            'credit_payment_method' => ['nullable', 'in:efectivo,transferencia,tarjeta,otro'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.item_type' => ['required', 'in:product,service'],
             'items.*.product_id' => ['nullable', 'exists:products,id'],
@@ -96,6 +101,7 @@ class SaleController extends Controller
         }
 
         try {
+            app(CashReportService::class)->assertDayIsOpen(now());
             $sale = DB::transaction(function () use ($data, $discount) {
                 $subtotal = 0;
                 $taxTotal = 0;
@@ -184,6 +190,8 @@ class SaleController extends Controller
                     throw new \RuntimeException('El abono no puede ser mayor que el total.');
                 }
 
+                $paymentLines = $this->paymentLines($data, $total, $paidAmount, $isCredit);
+
                 $balance = $isCredit ? $total - $paidAmount : 0;
                 $creditStatus = match (true) {
                     ! $isCredit => 'sin_credito',
@@ -216,6 +224,7 @@ class SaleController extends Controller
                         'item_type' => $item['item_type'],
                         'product_name' => $item['name'],
                         'unit_price' => $item['unit_price'],
+                        'cost_price' => $item['product'] ? $item['product']->purchase_price : 0,
                         'tax_rate' => $item['tax_rate'],
                         'quantity' => $item['quantity'],
                         'subtotal' => $item['subtotal'],
@@ -226,6 +235,10 @@ class SaleController extends Controller
                     if ($item['product']) {
                         $item['product']->decrement('stock', $item['quantity']);
                     }
+                }
+
+                foreach ($paymentLines as $payment) {
+                    $sale->payments()->create($payment);
                 }
 
                 if ($sale->invoice_type === 'electronica') {
@@ -266,6 +279,7 @@ class SaleController extends Controller
             return back()->withErrors('La venta ya esta anulada.');
         }
 
+        app(CashReportService::class)->assertDayIsOpen($sale->created_at);
         DB::transaction(function () use ($sale) {
             $sale->load('items.product');
 
@@ -277,6 +291,28 @@ class SaleController extends Controller
         });
 
         return back()->with('success', 'Venta anulada y stock restaurado.');
+    }
+
+    private function paymentLines(array $data, float $total, float $paidAmount, bool $isCredit): array
+    {
+        if ($isCredit) {
+            return $paidAmount > 0 ? [['payment_method' => $data['credit_payment_method'] ?? 'efectivo', 'amount' => $paidAmount]] : [];
+        }
+
+        if ($data['payment_method'] !== 'mixto') {
+            return [['payment_method' => $data['payment_method'], 'amount' => $total]];
+        }
+
+        $payments = array_values($data['payments'] ?? []);
+        if (count($payments) < 2) {
+            throw new \RuntimeException('En un pago mixto registra al menos dos medios de pago.');
+        }
+        $sum = round(array_sum(array_map(fn ($payment) => (float) $payment['amount'], $payments)), 2);
+        if (abs($sum - round($total, 2)) > 0.009) {
+            throw new \RuntimeException('Los medios de pago deben sumar exactamente el total de la venta.');
+        }
+
+        return $payments;
     }
 
     private function missingElectronicCustomerFields(?Customer $customer): array

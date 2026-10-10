@@ -27,6 +27,11 @@
         <label>Descuento<input type="number" step="0.01" min="0" name="discount" id="discount" value="{{ old('discount', 0) }}" oninput="calculate()"></label>
         <label>Valor pagado<input type="number" step="0.01" min="0" name="paid_amount" id="paid" value="{{ old('paid_amount', 0) }}" oninput="calculate()" required></label>
     </div>
+    <div class="panel" id="mixedPayments" style="display:none;margin-top:14px;">
+        <h2>Desglose del pago mixto</h2><p class="muted">Registra cada medio. La suma debe ser exactamente igual al total de la venta.</p>
+        <div id="paymentLines" class="grid"></div><div class="actions" style="margin-top:10px;"><button type="button" class="btn light" onclick="addPaymentLine()">Agregar medio de pago</button></div>
+    </div>
+    <label id="creditPaymentMethod" style="display:none;margin-top:14px;">Medio del abono inicial<select name="credit_payment_method"><option value="efectivo">Efectivo</option><option value="transferencia">Transferencia</option><option value="tarjeta">Tarjeta</option><option value="otro">Otro</option></select></label>
     <div class="grid grid-4" style="margin-top:16px;">
         <div class="panel"><div class="muted">Subtotal</div><div class="metric" id="subtotal">$0</div></div>
         <div class="panel"><div class="muted">IVA</div><div class="metric" id="tax">$0</div></div>
@@ -145,10 +150,20 @@ function calculate() {
 }
 function toggleCreditFields() {
     const isCredit = document.getElementById('paymentMethod').value === 'credito';
+    const isMixed = document.getElementById('paymentMethod').value === 'mixto';
     document.getElementById('creditDueField').style.display = isCredit ? 'grid' : 'none';
+    document.getElementById('creditPaymentMethod').style.display = isCredit ? 'grid' : 'none';
+    document.getElementById('mixedPayments').style.display = isMixed ? 'block' : 'none';
     document.getElementById('creditDueDate').required = isCredit;
     if (!isCredit) paidAmountEdited = false;
     calculate();
+}
+let paymentIndex = 0;
+function addPaymentLine(method = 'efectivo', amount = '') {
+    const row = document.createElement('div');
+    row.className = 'form-grid';
+    row.innerHTML = `<label>Medio<select name="payments[${paymentIndex}][payment_method]"><option value="efectivo" ${method === 'efectivo' ? 'selected' : ''}>Efectivo</option><option value="transferencia" ${method === 'transferencia' ? 'selected' : ''}>Transferencia</option><option value="tarjeta" ${method === 'tarjeta' ? 'selected' : ''}>Tarjeta</option><option value="otro" ${method === 'otro' ? 'selected' : ''}>Otro</option></select></label><label>Valor<input name="payments[${paymentIndex}][amount]" type="number" step="0.01" min="0.01" value="${amount}" required></label><button class="btn danger" type="button" onclick="this.parentElement.remove()">Quitar</button>`;
+    document.getElementById('paymentLines').appendChild(row); paymentIndex++;
 }
 function toggleInvoiceType() {
     const electronic = document.getElementById('invoiceType').value === 'electronica';
@@ -302,6 +317,9 @@ document.getElementById('saleForm').addEventListener('submit', function (event) 
         event.preventDefault();
         setScanMessage('Corrige el precio unitario: debe ser mayor que cero.', 'error');
         invalidPrice.focus();
+    }
+    if (document.getElementById('paymentMethod').value === 'mixto' && document.querySelectorAll('#paymentLines .form-grid').length < 2) {
+        event.preventDefault(); setScanMessage('En el pago mixto registra al menos dos medios de pago.', 'error');
     }
 });
 if (oldItems.length) {
