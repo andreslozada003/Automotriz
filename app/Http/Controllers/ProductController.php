@@ -14,6 +14,8 @@ use Illuminate\Validation\Rule;
 
 class ProductController extends Controller
 {
+    private const ALLOWED_MARGINS = [30, 40, 50, 80];
+
     public function index(Request $request)
     {
         $products = Product::with(['category', 'supplier', 'primaryBarcode'])
@@ -123,7 +125,7 @@ class ProductController extends Controller
 
     private function validated(Request $request, ?Product $product = null): array
     {
-        return $request->validate([
+        $data = $request->validate([
             'category_id' => ['required', 'exists:categories,id'],
             'supplier_id' => ['nullable', 'exists:suppliers,id'],
             'code' => ['required', 'string', 'max:80'],
@@ -139,12 +141,19 @@ class ProductController extends Controller
             'description' => ['nullable', 'string'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'purchase_price' => ['required', 'numeric', 'min:0'],
-            'sale_price' => ['required', 'numeric', 'min:0'],
-            'tax_rate' => ['required', 'numeric', 'min:0', 'max:100'],
+            'profit_margin' => ['required', 'numeric', Rule::in(self::ALLOWED_MARGINS)],
             'stock' => ['required', 'integer', 'min:0'],
             'min_stock' => ['required', 'integer', 'min:0'],
             'active' => ['nullable', 'boolean'],
         ]) + ['active' => false];
+
+        $margin = (float) $data['profit_margin'];
+        $cost = (float) $data['purchase_price'];
+        $data['purchase_tax_rate'] = 19;
+        $data['tax_rate'] = 19;
+        $data['sale_price'] = round($cost * (1 + ($margin / 100)), 2);
+
+        return $data;
     }
 
     private function storeImage(Request $request, ?Product $product = null): ?string

@@ -73,7 +73,7 @@ class ProductImportController extends Controller
 
         $headers = array_map(fn ($header) => $this->header($header), array_shift($rows));
         $columns = array_flip($headers);
-        foreach (['codigo', 'descripcion', 'cantidad', 'valorunitario', 'categoria', 'stockminimo'] as $required) {
+        foreach (['codigo', 'descripcion', 'cantidad', 'valorunitario', 'margen', 'categoria', 'stockminimo'] as $required) {
             if (! array_key_exists($required, $columns)) {
                 throw ValidationException::withMessages(['file' => "Falta la columna requerida: {$required}."]);
             }
@@ -90,16 +90,11 @@ class ProductImportController extends Controller
             $name = trim((string) ($row[$columns['descripcion']] ?? ''));
             $stock = $this->number($row[$columns['cantidad']] ?? null);
             $cost = $this->number($row[$columns['valorunitario']] ?? null);
-            $salePrice = array_key_exists('precioventa', $columns) ? $this->number($row[$columns['precioventa']] ?? null) : null;
-            $tax = array_key_exists('iva', $columns) ? $this->number($row[$columns['iva']] ?? 0) : 0;
-            // Excel stores a percentage such as 19% as the numeric value 0.19.
-            if ($tax !== null && $tax > 0 && $tax <= 1) {
-                $tax *= 100;
-            }
+            $margin = $this->number($row[$columns['margen']] ?? null);
             $category = trim((string) ($row[$columns['categoria']] ?? ''));
             $minStock = $this->number($row[$columns['stockminimo']] ?? null);
 
-            if ($code === '' || $name === '' || $category === '' || $stock === null || $stock < 0 || floor($stock) !== $stock || $minStock === null || $minStock < 0 || floor($minStock) !== $minStock || $cost === null || $cost < 0 || $salePrice !== null && $salePrice < 0 || $tax === null || $tax < 0 || $tax > 100) {
+            if ($code === '' || $name === '' || $category === '' || $stock === null || $stock < 0 || floor($stock) !== $stock || $minStock === null || $minStock < 0 || floor($minStock) !== $minStock || $cost === null || $cost < 0 || ! in_array($margin, [30.0, 40.0, 50.0, 80.0], true)) {
                 throw ValidationException::withMessages(['file' => "La fila {$line} tiene datos incompletos o inválidos. Código, descripción, cantidad y valor unitario son obligatorios."]);
             }
             $products[] = [
@@ -109,8 +104,10 @@ class ProductImportController extends Controller
                 'name' => $name,
                 'description' => $name,
                 'purchase_price' => $cost,
-                'sale_price' => $salePrice,
-                'tax_rate' => $tax,
+                'purchase_tax_rate' => 19,
+                'profit_margin' => $margin,
+                'sale_price' => round($cost * (1 + ($margin / 100)), 2),
+                'tax_rate' => 19,
                 'stock' => (int) $stock,
                 'min_stock' => (int) $minStock,
                 'active' => true,
@@ -194,9 +191,8 @@ class ProductImportController extends Controller
             'codigo', 'cod' => 'codigo',
             'descripcion', 'nombre', 'producto' => 'descripcion',
             'cantidad', 'stock' => 'cantidad',
-            'valorunitario', 'valorunitariocosto', 'precio', 'preciounitario', 'valor' => 'valorunitario',
-            'precioventa', 'preciodeventa', 'valorunitarioventa', 'venta' => 'precioventa',
-            'iva', 'porcentajeiva' => 'iva',
+            'valorunitario', 'valorunitariocosto', 'precio', 'preciounitario', 'valor', 'costonetosiniva', 'costoneto', 'costosiniva' => 'valorunitario',
+            'margen', 'margenganancia', 'porcentajemargen', 'utilidad' => 'margen',
             'categoria', 'category' => 'categoria',
             'stockminimo', 'minstock', 'existenciaminima' => 'stockminimo',
             default => $value,
@@ -250,7 +246,7 @@ class ProductImportController extends Controller
         // The template contains only the fields that the importer accepts.
         // Each label is written to an individual XLSX cell below, so Excel
         // renders them as separate columns rather than one combined value.
-        $headers = ['Código', 'Descripción', 'Cantidad', 'Valor Unitario (Costo)', 'Precio de Venta', '% IVA', 'Categoría', 'Stock Mínimo'];
+        $headers = ['Código', 'Descripción', 'Cantidad', 'Costo Neto Sin IVA', 'Margen (%)', 'Categoría', 'Stock Mínimo'];
         $cells = [];
         foreach ($headers as $index => $header) {
             $column = chr(65 + $index);

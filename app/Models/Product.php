@@ -15,6 +15,8 @@ class Product extends Model
         'description',
         'image_path',
         'purchase_price',
+        'purchase_tax_rate',
+        'profit_margin',
         'sale_price',
         'tax_rate',
         'stock',
@@ -24,6 +26,8 @@ class Product extends Model
 
     protected $casts = [
         'purchase_price' => 'decimal:2',
+        'purchase_tax_rate' => 'decimal:2',
+        'profit_margin' => 'decimal:2',
         'sale_price' => 'decimal:2',
         'tax_rate' => 'decimal:2',
         'active' => 'boolean',
