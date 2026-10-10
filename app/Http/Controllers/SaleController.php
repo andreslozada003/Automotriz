@@ -224,7 +224,9 @@ class SaleController extends Controller
                         'item_type' => $item['item_type'],
                         'product_name' => $item['name'],
                         'unit_price' => $item['unit_price'],
-                        'cost_price' => $item['product'] ? $item['product']->purchase_price : 0,
+                        'cost_price' => $item['product']
+                            ? (float) $item['product']->purchase_price * (1 + ((float) $item['product']->purchase_tax_rate / 100))
+                            : 0,
                         'tax_rate' => $item['tax_rate'],
                         'quantity' => $item['quantity'],
                         'subtotal' => $item['subtotal'],

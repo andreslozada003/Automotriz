@@ -35,9 +35,11 @@
         const netCost = Number(cost.value || 0);
         const selectedMargin = Number(margin.value || 0);
         if (netCost < 0 || ! selectedMargin) { breakdown.textContent = 'Indica costo y margen.'; customerPrice.textContent = '$0'; return; }
-        const saleBeforeTax = netCost * (1 + selectedMargin / 100);
+        const purchaseTax = netCost * .19;
+        const costWithPurchaseTax = netCost + purchaseTax;
+        const saleBeforeTax = costWithPurchaseTax * (1 + selectedMargin / 100);
         const saleTax = saleBeforeTax * .19;
-        breakdown.textContent = `Venta sin IVA: ${money(saleBeforeTax)} · IVA cliente (19%): ${money(saleTax)}`;
+        breakdown.textContent = `IVA compra: ${money(purchaseTax)} · Costo real: ${money(costWithPurchaseTax)} · Venta sin IVA: ${money(saleBeforeTax)} · IVA cliente (19%): ${money(saleTax)}`;
         customerPrice.textContent = `Total cliente: ${money(saleBeforeTax + saleTax)}`;
     };
     cost.addEventListener('input', update); margin.addEventListener('change', update); update();

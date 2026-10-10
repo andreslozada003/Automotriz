@@ -151,7 +151,8 @@ class ProductController extends Controller
         $cost = (float) $data['purchase_price'];
         $data['purchase_tax_rate'] = 19;
         $data['tax_rate'] = 19;
-        $data['sale_price'] = round($cost * (1 + ($margin / 100)), 2);
+        $costWithPurchaseTax = $cost * (1 + ($data['purchase_tax_rate'] / 100));
+        $data['sale_price'] = round($costWithPurchaseTax * (1 + ($margin / 100)), 2);
 
         return $data;
     }

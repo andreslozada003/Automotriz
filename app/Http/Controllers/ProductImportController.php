@@ -94,8 +94,31 @@ class ProductImportController extends Controller
             $category = trim((string) ($row[$columns['categoria']] ?? ''));
             $minStock = $this->number($row[$columns['stockminimo']] ?? null);
 
-            if ($code === '' || $name === '' || $category === '' || $stock === null || $stock < 0 || floor($stock) !== $stock || $minStock === null || $minStock < 0 || floor($minStock) !== $minStock || $cost === null || $cost < 0 || ! in_array($margin, [30.0, 40.0, 50.0, 80.0], true)) {
-                throw ValidationException::withMessages(['file' => "La fila {$line} tiene datos incompletos o inválidos. Código, descripción, cantidad y valor unitario son obligatorios."]);
+            $errors = [];
+            if ($code === '') {
+                $errors[] = 'Código';
+            }
+            if ($name === '') {
+                $errors[] = 'Descripción';
+            }
+            if ($stock === null || $stock < 0 || floor($stock) !== $stock) {
+                $errors[] = 'Cantidad (entero igual o mayor a 0)';
+            }
+            if ($cost === null || $cost < 0) {
+                $errors[] = 'Costo neto sin IVA';
+            }
+            if (! in_array($margin, [30.0, 40.0, 50.0, 80.0], true)) {
+                $errors[] = 'Margen (solo 30, 40, 50 u 80)';
+            }
+            if ($category === '') {
+                $errors[] = 'Categoría';
+            }
+            if ($minStock === null || $minStock < 0 || floor($minStock) !== $minStock) {
+                $errors[] = 'Stock mínimo (entero igual o mayor a 0)';
+            }
+
+            if ($errors !== []) {
+                throw ValidationException::withMessages(['file' => "Fila {$line}: ".implode(', ', $errors).'.']);
             }
             $products[] = [
                 'category_name' => $category,
@@ -106,7 +129,7 @@ class ProductImportController extends Controller
                 'purchase_price' => $cost,
                 'purchase_tax_rate' => 19,
                 'profit_margin' => $margin,
-                'sale_price' => round($cost * (1 + ($margin / 100)), 2),
+                'sale_price' => round($cost * 1.19 * (1 + ($margin / 100)), 2),
                 'tax_rate' => 19,
                 'stock' => (int) $stock,
                 'min_stock' => (int) $minStock,
