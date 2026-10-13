@@ -49,6 +49,26 @@ class ProductController extends Controller
         return view('products.barcode-label', compact('product'));
     }
 
+    public function barcodeLabels(Request $request)
+    {
+        $data = $request->validate([
+            'product_ids' => ['nullable', 'array'],
+            'product_ids.*' => ['integer', 'exists:products,id'],
+            'all' => ['nullable', 'boolean'],
+        ]);
+
+        $query = Product::with('primaryBarcode')->whereHas('primaryBarcode');
+        if (! ($data['all'] ?? false)) {
+            $ids = $data['product_ids'] ?? [];
+            if ($ids === []) {
+                return back()->withErrors('Selecciona al menos un producto o usa la opción para imprimir todos los códigos.');
+            }
+            $query->whereIn('id', $ids);
+        }
+
+        return view('products.barcode-labels', ['products' => $query->orderBy('name')->get()]);
+    }
+
     public function create()
     {
         return view('products.create', $this->formData());

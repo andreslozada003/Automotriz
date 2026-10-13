@@ -45,6 +45,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/products/import', [ProductImportController::class, 'create'])->name('products.import.create');
         Route::post('/products/import', [ProductImportController::class, 'store'])->name('products.import.store');
         Route::get('/products/import/template', [ProductImportController::class, 'template'])->name('products.import.template');
+        Route::get('/products/barcode-labels', [ProductController::class, 'barcodeLabels'])->name('products.barcode-labels');
         Route::delete('/sales/{sale}', [SaleController::class, 'destroy'])->name('sales.destroy');
         Route::get('/credits', [CreditController::class, 'index'])->name('credits.index');
         Route::get('/credits/{sale}/payment', [CreditController::class, 'payment'])->name('credits.payment');
