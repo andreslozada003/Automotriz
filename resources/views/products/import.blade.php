@@ -3,7 +3,7 @@
 @section('content')
 <div class="panel" style="max-width:760px;">
     <h1>Cargue masivo de productos</h1>
-    <p class="muted">Descarga la plantilla, llena una fila por producto y súbela. Requiere: <strong>Código, Descripción, Cantidad, Costo neto sin IVA, Margen (30, 40, 50 u 80), Categoría y Stock mínimo</strong>. El sistema calcula el precio de venta y aplica IVA del 19% automáticamente.</p>
+    <p class="muted">Descarga la plantilla, llena una fila por producto y súbela. Requiere: <strong>Código, Descripción, Cantidad, Costo neto sin IVA, Margen (%), Categoría y Stock mínimo</strong>. El margen puede ser cualquier valor entre 0 y 999,99. El sistema calcula el precio de venta e IVA automáticamente.</p>
     @if(false)
     <p class="muted">Carga un Excel (.xlsx) o CSV con: <strong>Código, Descripción, Cantidad, Valor Unitario, Precio de Venta, % IVA, Categoría y Stock Mínimo</strong>. El valor unitario será el costo y el producto no tendrá proveedor. Precio de Venta puede quedar vacío. Si la categoría no existe, se creará automáticamente. Cada producto recibe el siguiente código de barras interno.</p>
     @endif

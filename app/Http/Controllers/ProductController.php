@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\Supplier;
 use App\Services\BarcodeService;
 use App\Services\ProductBarcodeService;
+use App\Services\ProductPricingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -14,8 +15,6 @@ use Illuminate\Validation\Rule;
 
 class ProductController extends Controller
 {
-    private const ALLOWED_MARGINS = [30, 40, 50, 80];
-
     public function index(Request $request)
     {
         $products = Product::with(['category', 'supplier', 'primaryBarcode'])
@@ -141,18 +140,16 @@ class ProductController extends Controller
             'description' => ['nullable', 'string'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'purchase_price' => ['required', 'numeric', 'min:0'],
-            'profit_margin' => ['required', 'numeric', Rule::in(self::ALLOWED_MARGINS)],
+            'profit_margin' => ['required', 'numeric', 'min:0', 'max:999.99'],
             'stock' => ['required', 'integer', 'min:0'],
             'min_stock' => ['required', 'integer', 'min:0'],
             'active' => ['nullable', 'boolean'],
         ]) + ['active' => false];
 
-        $margin = (float) $data['profit_margin'];
-        $cost = (float) $data['purchase_price'];
-        $data['purchase_tax_rate'] = 19;
-        $data['tax_rate'] = 19;
-        $costWithPurchaseTax = $cost * (1 + ($data['purchase_tax_rate'] / 100));
-        $data['sale_price'] = round($costWithPurchaseTax * (1 + ($margin / 100)), 2);
+        $pricing = app(ProductPricingService::class)->calculate((float) $data['purchase_price'], (float) $data['profit_margin']);
+        $data['purchase_tax_rate'] = $pricing['purchase_tax_rate'];
+        $data['tax_rate'] = $pricing['tax_rate'];
+        $data['sale_price'] = $pricing['sale_price'];
 
         return $data;
     }

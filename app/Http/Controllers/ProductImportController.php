@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Services\BarcodeService;
 use App\Services\ProductBarcodeService;
+use App\Services\ProductPricingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -107,8 +108,8 @@ class ProductImportController extends Controller
             if ($cost === null || $cost < 0) {
                 $errors[] = 'Costo neto sin IVA';
             }
-            if (! in_array($margin, [30.0, 40.0, 50.0, 80.0], true)) {
-                $errors[] = 'Margen (solo 30, 40, 50 u 80)';
+            if ($margin === null || $margin < 0 || $margin > 999.99) {
+                $errors[] = 'Margen (número entre 0 y 999,99)';
             }
             if ($category === '') {
                 $errors[] = 'Categoría';
@@ -120,6 +121,7 @@ class ProductImportController extends Controller
             if ($errors !== []) {
                 throw ValidationException::withMessages(['file' => "Fila {$line}: ".implode(', ', $errors).'.']);
             }
+            $pricing = app(ProductPricingService::class)->calculate($cost, $margin);
             $products[] = [
                 'category_name' => $category,
                 'supplier_id' => null,
@@ -127,10 +129,10 @@ class ProductImportController extends Controller
                 'name' => $name,
                 'description' => $name,
                 'purchase_price' => $cost,
-                'purchase_tax_rate' => 19,
+                'purchase_tax_rate' => $pricing['purchase_tax_rate'],
                 'profit_margin' => $margin,
-                'sale_price' => round($cost * 1.19 * (1 + ($margin / 100)), 2),
-                'tax_rate' => 19,
+                'sale_price' => $pricing['sale_price'],
+                'tax_rate' => $pricing['tax_rate'],
                 'stock' => (int) $stock,
                 'min_stock' => (int) $minStock,
                 'active' => true,

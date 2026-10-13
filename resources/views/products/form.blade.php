@@ -16,7 +16,7 @@
     </select></label>
     <label>Costo neto (sin IVA)<input id="purchasePrice" type="number" step="0.01" min="0" name="purchase_price" value="{{ old('purchase_price', $product->purchase_price ?? 0) }}" required></label>
     <label>IVA de compra<input value="19%" readonly aria-label="IVA de compra fijo del 19 por ciento"></label>
-    <label>Margen comercial<select id="profitMargin" name="profit_margin" required><option value="">Seleccione el margen</option>@foreach([30, 40, 50, 80] as $margin)<option value="{{ $margin }}" @selected((string) old('profit_margin', $product->profit_margin ?? '') === (string) $margin)>{{ $margin }}% sobre el costo neto</option>@endforeach</select></label>
+    <label>Margen comercial (%)<input id="profitMargin" type="number" step="0.01" min="0" max="999.99" name="profit_margin" value="{{ old('profit_margin', $product->profit_margin ?? '') }}" placeholder="Ej: 37.5" required></label>
     <div class="panel" style="padding:12px;"><strong>Precio calculado</strong><div class="muted" id="priceBreakdown">Indica costo y margen.</div><div class="metric" id="customerPrice">$0</div></div>
     <input type="hidden" name="purchase_tax_rate" value="19"><input type="hidden" name="tax_rate" value="19">
     <label>Stock<input type="number" min="0" name="stock" value="{{ old('stock', $product->stock ?? 0) }}" required></label>
@@ -34,7 +34,7 @@
     const update = () => {
         const netCost = Number(cost.value || 0);
         const selectedMargin = Number(margin.value || 0);
-        if (netCost < 0 || ! selectedMargin) { breakdown.textContent = 'Indica costo y margen.'; customerPrice.textContent = '$0'; return; }
+        if (netCost < 0 || margin.value === '' || selectedMargin < 0) { breakdown.textContent = 'Indica costo y margen.'; customerPrice.textContent = '$0'; return; }
         const purchaseTax = netCost * .19;
         const costWithPurchaseTax = netCost + purchaseTax;
         const saleBeforeTax = costWithPurchaseTax * (1 + selectedMargin / 100);
@@ -42,6 +42,6 @@
         breakdown.textContent = `IVA compra: ${money(purchaseTax)} · Costo real: ${money(costWithPurchaseTax)} · Venta sin IVA: ${money(saleBeforeTax)} · IVA cliente (19%): ${money(saleTax)}`;
         customerPrice.textContent = `Total cliente: ${money(saleBeforeTax + saleTax)}`;
     };
-    cost.addEventListener('input', update); margin.addEventListener('change', update); update();
+    cost.addEventListener('input', update); margin.addEventListener('input', update); update();
 })();
 </script>
