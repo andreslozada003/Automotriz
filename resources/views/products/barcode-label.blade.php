@@ -9,9 +9,9 @@
         * { box-sizing: border-box; }
         body { margin: 0; width: 58mm; font-family: Arial, Helvetica, sans-serif; color: #000; }
         .label { width: 58mm; height: 35mm; padding: 2mm 3mm; text-align: center; overflow: hidden; }
-        .name { display:flex; align-items:center; justify-content:center; height:8mm; font-size:8pt; font-weight:700; line-height:1.14; overflow:hidden; }
-        svg { display: block; width: 52mm; height: 15mm; margin: 1mm auto 0; }
-        .reference { margin-top: .5mm; font-size: 7.5pt; letter-spacing: .4px; }
+        .name { display:flex; align-items:center; justify-content:center; height:9mm; font-size:6.5pt; font-weight:700; line-height:1.12; overflow:hidden; }
+        svg { display: block; width: 52mm; height: 14mm; margin: .5mm auto 0; }
+        .reference { margin-top: .5mm; font-size: 7pt; letter-spacing: .35px; }
         .actions { margin-top: 12px; text-align: center; }
         button { border: 0; border-radius: 6px; background: #e50909; color: #fff; padding: 10px 14px; cursor: pointer; font: inherit; }
         @media print { .actions { display: none; } }
