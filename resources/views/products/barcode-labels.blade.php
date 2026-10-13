@@ -12,9 +12,9 @@
         button { border:0; border-radius:6px; padding:10px 14px; background:#e50909; color:#fff; font:inherit; font-weight:700; cursor:pointer; }
         .labels { display:grid; grid-template-columns:repeat(3, 58mm); gap:4mm 7mm; }
         .label { width:58mm; height:35mm; padding:2mm 3mm; text-align:center; overflow:hidden; page-break-inside:avoid; border:1px dashed #d1d5db; }
-        .name { font-size:10pt; font-weight:700; line-height:1.15; height:23px; overflow:hidden; }
-        svg { display:block; width:52mm; height:17mm; margin:1.5mm auto 0; }
-        .reference { margin-top:.5mm; font-size:8pt; letter-spacing:.4px; }
+        .name { display:flex; align-items:center; justify-content:center; height:8mm; font-size:8pt; font-weight:700; line-height:1.14; overflow:hidden; }
+        svg { display:block; width:52mm; height:15mm; margin:1mm auto 0; }
+        .reference { margin-top:.5mm; font-size:7.5pt; letter-spacing:.4px; }
         @media print { .toolbar { display:none; } .label { border:0; } }
     </style>
 </head>
