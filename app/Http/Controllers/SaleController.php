@@ -37,6 +37,7 @@ class SaleController extends Controller
                 'price' => (float) $product->sale_price,
                 'tax_rate' => (float) $product->tax_rate,
                 'stock' => $product->stock,
+                'image_url' => $product->image_url,
             ])->values(),
             'serviceOptions' => $services->map(fn ($service) => [
                 'id' => $service->id,
